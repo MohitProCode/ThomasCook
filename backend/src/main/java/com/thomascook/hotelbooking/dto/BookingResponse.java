@@ -28,4 +28,16 @@ public record BookingResponse(
     String currency,
     BookingStatus status,
     LocalDateTime createdAt,
-    LocalDateTime cancelledAt) {}
+    LocalDateTime cancelledAt,
+    String roomName,
+    String roomOfferId,
+    Integer guests) {
+  public BookingResponse(String reference, Long hotelId, String hotelName, String location,
+      String guestName, String email, String guestEmail, LocalDate checkIn, LocalDate checkOut,
+      int nights, BigDecimal pricePerNight, BigDecimal totalPrice, BigDecimal totalAmount,
+      String currency, BookingStatus status, LocalDateTime createdAt, LocalDateTime cancelledAt) {
+    this(reference, hotelId, hotelName, location, guestName, email, guestEmail, checkIn, checkOut,
+        nights, pricePerNight, totalPrice, totalAmount, currency, status, createdAt, cancelledAt,
+        null, null, null);
+  }
+}

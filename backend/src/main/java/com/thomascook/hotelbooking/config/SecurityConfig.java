@@ -15,7 +15,7 @@ public class SecurityConfig {
   @Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
   @Bean SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwt) throws Exception {
     return http.csrf(c->c.disable()).cors(c->{}).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(a->a.requestMatchers("/api/auth/**","/api/hotels/**","/error").permitAll().anyRequest().authenticated())
+        .authorizeHttpRequests(a->a.requestMatchers("/api/auth/**","/api/hotels/**","/api/health","/error").permitAll().anyRequest().authenticated())
         .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class).build();
   }
 }

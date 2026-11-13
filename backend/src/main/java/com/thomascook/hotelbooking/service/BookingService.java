@@ -108,6 +108,9 @@ public class BookingService {
       booking.setUser(userRepository.findByEmailIgnoreCase(authenticatedEmail)
           .orElseThrow(() -> new InvalidRequestException("Authenticated account was not found")));
     }
+    booking.setRoomOfferId(request.getRoomOfferId());
+    booking.setRoomName(request.getRoomName());
+    booking.setGuestCount(request.getGuests());
     try {
       booking = bookingRepository.saveAndFlush(booking);
     } catch (DataIntegrityViolationException collision) {
@@ -123,6 +126,10 @@ public class BookingService {
               nights,
               hotel.getPricePerNight(),
               total);
+      booking.setUser(authenticatedEmail == null ? null : userRepository.findByEmailIgnoreCase(authenticatedEmail).orElse(null));
+      booking.setRoomOfferId(request.getRoomOfferId());
+      booking.setRoomName(request.getRoomName());
+      booking.setGuestCount(request.getGuests());
       booking = bookingRepository.saveAndFlush(booking);
     }
     return toResponse(booking);
@@ -208,6 +215,9 @@ public class BookingService {
         currency,
         booking.getStatus(),
         booking.getCreatedAt(),
-        booking.getCancelledAt());
+        booking.getCancelledAt(),
+        booking.getRoomName(),
+        booking.getRoomOfferId(),
+        booking.getGuestCount());
   }
 }

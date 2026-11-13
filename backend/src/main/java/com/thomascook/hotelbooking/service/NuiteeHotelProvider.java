@@ -3,6 +3,8 @@ package com.thomascook.hotelbooking.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thomascook.hotelbooking.exception.InvalidRequestException;
+import com.thomascook.hotelbooking.dto.HotelContentDto;
+import com.thomascook.hotelbooking.dto.RoomOptionDto;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,6 +44,32 @@ public class NuiteeHotelProvider {
 
   public boolean isEnabled() {
     return enabled && !apiKey.isBlank();
+  }
+
+  public HotelContentDto content(String hotelId) {
+    try {
+      String raw = client.get().uri(uri -> uri.path("/v3.0/data/hotel").queryParam("hotelId", hotelId).build())
+          .header("X-API-Key", apiKey).accept(MediaType.APPLICATION_JSON).retrieve().body(String.class);
+      JsonNode d = objectMapper.readTree(raw).path("data");
+      List<String> images = new ArrayList<>();
+      for (JsonNode image : d.path("hotelImages")) { String url = text(image, "url", null); if (url != null) images.add(url); }
+      List<String> amenities = strings(d.path("hotelFacilities"));
+      List<HotelContentDto.RoomContentDto> rooms = new ArrayList<>();
+      for (JsonNode room : d.path("rooms")) {
+        List<String> roomImages = new ArrayList<>();
+        for (JsonNode image : room.path("photos")) { String url=text(image,"url",null); if(url!=null) roomImages.add(url); }
+        rooms.add(new HotelContentDto.RoomContentDto(text(room,"roomName",text(room,"name","Room")), text(room,"roomSize",null), integer(room,"maxOccupancy"), strings(room.path("hotelFacilities")), roomImages));
+      }
+      JsonNode location = d.path("location");
+      return new HotelContentDto(d.path("id").asText(hotelId), text(d,"name",null), text(d,"hotelDescription",null), text(d,"address",null), text(d,"city",null), text(d,"country",null), number(location,"latitude"), number(location,"longitude"), text(d,"main_photo",null), text(d,"thumbnail",null), amenities, images, rooms);
+    } catch (RestClientResponseException ex) { throw new InvalidRequestException("Nuitee hotel details failed (HTTP " + ex.getStatusCode().value() + ")"); }
+    catch (Exception ex) { throw new InvalidRequestException("Nuitee hotel details failed: " + ex.getMessage()); }
+  }
+
+  public List<RoomOptionDto> rooms(String hotelId, java.time.LocalDate checkIn, java.time.LocalDate checkOut, int guests) {
+    Map<String,Object> body = new HashMap<>(); body.put("hotelIds", List.of(hotelId)); body.put("checkin",checkIn.toString()); body.put("checkout",checkOut.toString()); body.put("currency",currency); body.put("guestNationality",nationality); body.put("occupancies",List.of(Map.of("adults",Math.max(1,guests)))); body.put("roomMapping",true); body.put("maxRatesPerHotel",5); body.put("includeHotelData",true);
+    try { String raw=client.post().uri("/v3.0/hotels/rates").header("X-API-Key",apiKey).contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON).body(body).retrieve().body(String.class); return parseRooms(raw,java.time.temporal.ChronoUnit.DAYS.between(checkIn,checkOut)); }
+    catch(RestClientResponseException ex){throw new InvalidRequestException("Nuitee room rates failed (HTTP "+ex.getStatusCode().value()+")");} catch(Exception ex){throw new InvalidRequestException("Nuitee room rates failed: "+ex.getMessage());}
   }
 
   public List<ExternalHotel> search(
@@ -138,6 +166,18 @@ public class NuiteeHotelProvider {
     String value = node.path(field).asText("").trim();
     return value.isBlank() ? fallback : value;
   }
+
+  private List<RoomOptionDto> parseRooms(String raw, long nights) throws Exception {
+    JsonNode root=objectMapper.readTree(raw); List<RoomOptionDto> result=new ArrayList<>();
+    for(JsonNode item:root.path("data")) for(JsonNode room:item.path("roomTypes")) for(JsonNode rate:room.path("rates")) {
+      BigDecimal total=amount(rate); if(total==null) continue; BigDecimal perNight=nights>0?total.divide(BigDecimal.valueOf(nights),2,java.math.RoundingMode.HALF_UP):total;
+      int available=rate.path("availableRooms").asInt(rate.path("roomsLeft").asInt(1));
+      result.add(new RoomOptionDto(firstNonBlank(text(room,"offerId",null),text(rate,"offerId",null),""), firstNonBlank(text(rate,"name",null),text(room,"name",null),"Room"), firstNonBlank(text(room,"roomSize",null),text(rate,"roomSize",null),null), integer(room,"maxOccupancy"), text(rate,"boardName",null), perNight,total,text(rate.path("cancellationPolicies"),"refundableTag",null),strings(room.path("amenities")),text(room,"main_photo",null),available));
+    }
+    return result;
+  }
+  private Integer integer(JsonNode node,String field){return node.path(field).isNumber()?node.path(field).intValue():null;}
+  private List<String> strings(JsonNode node){List<String> out=new ArrayList<>();if(node.isArray())for(JsonNode n:node){String v=n.asText("").trim();if(!v.isBlank())out.add(v);}return out;}
 
   private String firstNonBlank(String... values) {
     for (String value : values) if (value != null && !value.isBlank()) return value;

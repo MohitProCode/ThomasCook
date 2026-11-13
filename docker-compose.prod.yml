@@ -1,0 +1,53 @@
+# Production compose for a single VM (e.g. Oracle Always Free Ampere/AMD).
+# DB data persists in the hotel-mysql-prod volume. Backend is stateless.
+# Usage on the VM: set env vars (see backend/.env.example), then
+#   docker compose -f docker-compose.prod.yml up -d --build
+name: hotel-booking-prod
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: hotel-booking-prod-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-hotel_booking}
+      MYSQL_USER: ${DB_USER:?set DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+    volumes:
+      - hotel-mysql-prod:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  backend:
+    build: ./backend
+    container_name: hotel-booking-prod-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${HOST_PORT:-8082}:8082"
+    environment:
+      SERVER_PORT: 8082
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-hotel_booking}
+      DB_USER: ${DB_USER:?set DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?set FRONTEND_ORIGIN to the Vercel URL}
+      FRONTEND_URL: ${FRONTEND_URL:?set FRONTEND_URL to the Vercel URL}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET to a long random value}
+      JWT_TTL_MINUTES: ${JWT_TTL_MINUTES:-60}
+      NUITEE_ENABLED: ${NUITEE_ENABLED:-true}
+      NUITEE_API_KEY: ${NUITEE_API_KEY:-}
+      NUITEE_BASE_URL: ${NUITEE_BASE_URL:-https://api.liteapi.travel}
+      NUITEE_GUEST_NATIONALITY: ${NUITEE_GUEST_NATIONALITY:-IN}
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx512m -XX:+UseSerialGC}
+
+volumes:
+  hotel-mysql-prod:

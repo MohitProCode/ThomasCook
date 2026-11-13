@@ -39,7 +39,9 @@ export async function apiFetch(path, { method = 'GET', body, query, timeoutMs = 
       throw new ApiError({ message: 'Request timed out. Please try again.' });
     }
     throw new ApiError({
-      message: 'Cannot reach the backend at localhost:8081. Is Spring Boot running?',
+      message: BASE
+        ? `Cannot reach the backend at ${BASE}. Is the API running?`
+        : 'Cannot reach the backend. Is the API running?',
     });
   }
   clearTimeout(timer);

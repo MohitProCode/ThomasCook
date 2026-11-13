@@ -1,35 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --bg: #f7f7fc;
-  --surface: #ffffff;
-  --text: #1a1a1a;
-  --muted: #6b7280;
-  --brand: #6657d9;
-  --brand-light: #efedff;
-  --brand-dark: #4d3fb5;
-  --ok: #10b981;
-  --warn: #f59e0b;
-  --bad: #d71920;
-  --border: #e7e7e7;
-  --border-focus: #6657d9;
-  --radius: 8px;
-  --radius-sm: 6px;
-  --max: 1240px;
-  --shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.06);
-  --shadow-md: 0 4px 12px rgba(26, 26, 26, 0.08);
-  --shadow-lg: 0 12px 30px rgba(26, 26, 26, 0.12);
-  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Luxury/Premium palette from design system */
+  --color-primary:        #1C1917;
+  --color-on-primary:     #FFFFFF;
+  --color-secondary:      #44403C;
+  --color-on-secondary:   #FFFFFF;
+  --color-accent:         #A16207;
+  --color-on-accent:      #FFFFFF;
+  --color-bg:             #FAFAF9;
+  --color-fg:             #0C0A09;
+  --color-card:           #FFFFFF;
+  --color-card-fg:        #0C0A09;
+  --color-muted:          #F5F5F4;
+  --color-muted-fg:       #78716C;
+  --color-border:         #E7E5E4;
+  --color-destructive:    #DC2626;
+  --color-on-destructive: #FFFFFF;
+  --color-ring:           #1C1917;
+
+  /* Semantic aliases */
+  --bg:           var(--color-bg);
+  --surface:      var(--color-card);
+  --surface-2:    var(--color-muted);
+  --text:         var(--color-fg);
+  --text-2:       var(--color-secondary);
+  --muted:        var(--color-muted-fg);
+  --brand:        var(--color-primary);
+  --brand-hover:  var(--color-secondary);
+  --brand-light:  #F5F5F4;
+  --accent:       var(--color-accent);
+  --ok:           #16A34A;
+  --ok-bg:        #F0FDF4;
+  --warn:         #D97706;
+  --warn-bg:      #FFFBEB;
+  --bad:          var(--color-destructive);
+  --bad-bg:       #FEF2F2;
+  --border:       var(--color-border);
+  --border-focus: var(--color-primary);
+
+  /* Typography — Outfit headings, Work Sans body */
+  --font-heading: 'Outfit', system-ui, sans-serif;
+  --font-body:    'Work Sans', system-ui, sans-serif;
+
+  /* Spacing — 4/8pt grid */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radius — Swiss style: minimal, functional */
+  --radius-sm:   4px;
+  --radius:      8px;
+  --radius-lg:   12px;
+  --radius-full: 9999px;
+
+  /* Shadows — subtle, no glow */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.10), 0 4px 8px rgba(0,0,0,.04);
+
+  /* Layout */
+  --max:      1280px;
+  --header-h: 64px;
+
+  /* Transitions */
+  --t-fast:   150ms ease;
+  --t-base:   200ms ease;
+  --t-slow:   300ms ease;
 }
+
 :root[data-theme='dark'] {
-  --bg: #0f172a;
-  --surface: #111827;
-  --text: #f8fafc;
-  --muted: #cbd5e1;
-  --brand: #38bdf8;
-  --brand-light: #172554;
-  --brand-dark: #7dd3fc;
-  --border: #334155;
-  --border-focus: #38bdf8;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
-  --shadow-md: 0 8px 24px rgba(0,0,0,.26);
-  --shadow-lg: 0 18px 40px rgba(0,0,0,.35);
+  /* Surfaces — true dark, not muddy */
+  --color-bg:       #0A0908;
+  --color-fg:       #F5F3F0;          /* warm white, not harsh */
+  --color-card:     #161412;
+  --color-card-fg:  #F5F3F0;
+  --color-muted:    #211E1B;          /* surface-2 */
+  --color-muted-fg: #C4BDB6;          /* ↑ from A8A29E — passes AA on dark card */
+  --color-border:   #2E2A26;          /* slightly lighter for visibility */
+  --color-primary:  #EDE9E4;          /* near-white for brand/buttons */
+  --color-on-primary: #161412;
+  --color-secondary: #B8B0A7;         /* ↑ from A8A29E */
+  --color-accent:   #E6A817;          /* gold — brighter for dark bg */
+
+  /* Semantic aliases */
+  --bg:           var(--color-bg);
+  --surface:      var(--color-card);
+  --surface-2:    var(--color-muted);
+  --text:         var(--color-fg);
+  --text-2:       var(--color-secondary);
+  --muted:        var(--color-muted-fg);
+  --brand:        var(--color-primary);
+  --brand-hover:  #C4BDB6;
+  --brand-light:  #211E1B;
+  --accent:       var(--color-accent);
+  --border:       var(--color-border);
+  --border-focus: var(--color-primary);
+
+  /* Status — all pass AA on dark surfaces */
+  --ok:     #34D399;   /* emerald-400 */
+  --ok-bg:  #052E1C;
+  --warn:   #FBBF24;   /* amber-400 */
+  --warn-bg:#2D1F04;
+  --bad:    #F87171;   /* red-400 */
+  --bad-bg: #2D0A0A;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.45);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.55);
+  --shadow-lg: 0 16px 40px rgba(0,0,0,.65);
 }

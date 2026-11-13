@@ -26,6 +26,10 @@ public class CreateBookingRequest {
   @NotNull(message = "Check-out date is required")
   private LocalDate checkOut;
 
+  private String roomOfferId;
+  private String roomName;
+  private Integer guests;
+
   public Long getHotelId() {
     return hotelId;
   }
@@ -65,4 +69,10 @@ public class CreateBookingRequest {
   public void setCheckOut(LocalDate checkOut) {
     this.checkOut = checkOut;
   }
+  public String getRoomOfferId() { return roomOfferId; }
+  public void setRoomOfferId(String roomOfferId) { this.roomOfferId = roomOfferId; }
+  public String getRoomName() { return roomName; }
+  public void setRoomName(String roomName) { this.roomName = roomName; }
+  public Integer getGuests() { return guests; }
+  public void setGuests(Integer guests) { this.guests = guests; }
 }

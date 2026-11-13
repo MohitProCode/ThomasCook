@@ -47,6 +47,13 @@ public class Booking {
   @JoinColumn(name = "user_id")
   private User user;
 
+  @Column(name = "room_offer_id", length = 500)
+  private String roomOfferId;
+  @Column(name = "room_name", length = 250)
+  private String roomName;
+  @Column(name = "guest_count")
+  private Integer guestCount;
+
   @Column(name = "guest_name", nullable = false, length = 150)
   private String guestName;
 
@@ -117,6 +124,12 @@ public class Booking {
 
   public User getUser() { return user; }
   public void setUser(User user) { this.user = user; }
+  public String getRoomOfferId() { return roomOfferId; }
+  public void setRoomOfferId(String roomOfferId) { this.roomOfferId = roomOfferId; }
+  public String getRoomName() { return roomName; }
+  public void setRoomName(String roomName) { this.roomName = roomName; }
+  public Integer getGuestCount() { return guestCount; }
+  public void setGuestCount(Integer guestCount) { this.guestCount = guestCount; }
 
   public String getGuestName() {
     return guestName;
