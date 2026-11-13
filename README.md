@@ -215,7 +215,7 @@ Auth column: `open` needs no token, `JWT` needs `Authorization: Bearer`.
 
 Errors use the envelope `{timestamp,status,error,message,path,errors}`; a
 `409` sold-out response additionally carries `smartAlternatives`. See
-[DESIGN.md](DESIGN.md) section 3 for full contracts.
+[DESIGN.md](DESIGN.md) section 5 for full contracts.
 
 ```mermaid
 sequenceDiagram
@@ -427,7 +427,7 @@ docs/demo-script.md               Screenshot/demo capture guide
     stale after the Nuitee/auth refactor and currently fail (missing
     `NuiteeSearchService`/`JwtService` wiring in the tests, not app bugs).
 - Frontend: no unit test suite; verify with `cd frontend && npm run build`
-  plus the manual smoke checklist in [DESIGN.md](DESIGN.md) section 9.
+  plus the manual smoke checklist in [DESIGN.md](DESIGN.md) section 14.
 
 ## 12. Known issues
 
