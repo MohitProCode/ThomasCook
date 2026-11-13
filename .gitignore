@@ -1,0 +1,15 @@
+node_modules/
+dist/
+target/
+.m2/
+.npm-cache/
+.tools/
+.tmp/
+.inventory/
+backend/.env
+backend/.env.*
+!backend/.env.example
+*.log
+.DS_Store
+superpowers/
+.agents/
