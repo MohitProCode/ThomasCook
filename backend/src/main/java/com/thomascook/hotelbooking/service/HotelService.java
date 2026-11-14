@@ -4,6 +4,7 @@ import com.thomascook.hotelbooking.domain.Hotel;
 import com.thomascook.hotelbooking.dto.AvailabilityDto;
 import com.thomascook.hotelbooking.dto.AvailabilityCalendarDto;
 import com.thomascook.hotelbooking.dto.AvailabilityDayDto;
+import com.thomascook.hotelbooking.dto.HotelContentDto;
 import com.thomascook.hotelbooking.dto.HotelDetailDto;
 import com.thomascook.hotelbooking.dto.HotelSummaryDto;
 import com.thomascook.hotelbooking.dto.PageResponse;
@@ -23,11 +24,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class HotelService {
 
+  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(HotelService.class);
+
   private final HotelRepository hotelRepository;
   private final AvailabilityService availabilityService;
   private final SmartAlternativesService smartAlternativesService;
   private final PricingService pricingService;
   private final DateRangeValidator dateRangeValidator;
+  private final NuiteeHotelProvider nuiteeProvider;
   private final String currency;
 
   public HotelService(
@@ -36,12 +40,14 @@ public class HotelService {
       SmartAlternativesService smartAlternativesService,
       PricingService pricingService,
       DateRangeValidator dateRangeValidator,
+      NuiteeHotelProvider nuiteeProvider,
       @Value("${app.currency:INR}") String currency) {
     this.hotelRepository = hotelRepository;
     this.availabilityService = availabilityService;
     this.smartAlternativesService = smartAlternativesService;
     this.pricingService = pricingService;
     this.dateRangeValidator = dateRangeValidator;
+    this.nuiteeProvider = nuiteeProvider;
     this.currency = currency;
   }
 
@@ -73,15 +79,29 @@ public class HotelService {
     Hotel hotel = hotelRepository.findById(id)
         .filter(h -> "NUITEE".equalsIgnoreCase(h.getSource()))
         .orElseThrow(() -> new HotelNotFoundException(id));
+    HotelContentDto content = fetchContent(hotel);
     if (checkIn == null) {
-      return toDetail(hotel, null, null, null);
+      return toDetail(hotel, null, null, null, content);
     }
     int free = availabilityService.availableRooms(hotel, checkIn, checkOut);
     int nights = pricingService.nightsBetween(checkIn, checkOut);
     AvailabilityDto availability = new AvailabilityDto(checkIn, checkOut, nights, free);
     SmartAlternativesDto alternatives =
         free == 0 ? smartAlternativesService.findAlternatives(id, checkIn, checkOut) : null;
-    return toDetail(hotel, free, availability, alternatives);
+    return toDetail(hotel, free, availability, alternatives, content);
+  }
+
+  /** Live Nuitee content enriches the stored snapshot; any failure degrades to the snapshot. */
+  private HotelContentDto fetchContent(Hotel hotel) {
+    if (!nuiteeProvider.isEnabled() || hotel.getSourceId() == null || hotel.getSourceId().isBlank()) {
+      return null;
+    }
+    try {
+      return nuiteeProvider.content(hotel.getSourceId());
+    } catch (RuntimeException ex) {
+      log.warn("Nuitee content fetch failed for hotel {}; serving stored snapshot", hotel.getId(), ex);
+      return null;
+    }
   }
 
   @Transactional(readOnly = true)
@@ -153,13 +173,14 @@ public class HotelService {
       Hotel hotel,
       Integer free,
       AvailabilityDto availability,
-      SmartAlternativesDto alternatives) {
+      SmartAlternativesDto alternatives,
+      HotelContentDto content) {
     return new HotelDetailDto(
         hotel.getId(),
         hotel.getName(),
         hotel.getLocation(),
         hotel.getDescription(),
-        hotel.getAmenityList(),
+        contentAmenities(hotel, content),
         hotel.getPricePerNight(),
         hotel.getTotalRooms(),
         free,
@@ -168,6 +189,20 @@ public class HotelService {
         hotel.getSource(), hotel.getPropertyType(), hotel.getBrand(), hotel.getAddress(),
         hotel.getPostalCode(), hotel.getPhone(), hotel.getWebsite(), hotel.getLatitude(), hotel.getLongitude(),
         hotel.getMainPhoto(), hotel.getThumbnail(), hotel.getGuestRating(), hotel.getStarRating(), hotel.getReviewCount(),
-        hotel.getRoomName(), hotel.getRateOfferId(), hotel.getBoardName());
+        hotel.getRoomName(), hotel.getRateOfferId(), hotel.getBoardName(), contentImages(content));
+  }
+
+  private List<String> contentAmenities(Hotel hotel, HotelContentDto content) {
+    if (content != null && content.amenities() != null && !content.amenities().isEmpty()) {
+      return content.amenities();
+    }
+    return hotel.getAmenityList();
+  }
+
+  private List<String> contentImages(HotelContentDto content) {
+    if (content != null && content.images() != null && !content.images().isEmpty()) {
+      return List.copyOf(content.images());
+    }
+    return null;
   }
 }

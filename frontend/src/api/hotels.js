@@ -31,6 +31,7 @@ function normalizeHotel(raw) {
     reviewCount: raw.reviewCount ?? null,
     roomName: raw.roomName || null,
     boardName: raw.boardName || null,
+    images: raw.images || [],
   };
 }
 

@@ -10,6 +10,7 @@ import { isValidRange, nightsBetween } from '../utils/dates.js';
 import { formatMoney } from '../utils/money.js';
 import { AvailabilityBadge } from '../components/HotelCard.jsx';
 import AlternativesPanel from '../components/AlternativesPanel.jsx';
+import PhotoCarousel from '../components/PhotoCarousel.jsx';
 import PriceBreakdown from '../components/PriceBreakdown.jsx';
 import BookingForm from '../components/BookingForm.jsx';
 import LoadingSkeleton from '../components/LoadingSkeleton.jsx';
@@ -38,6 +39,7 @@ export default function HotelDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [soldOut, setSoldOut] = useState(null);
+  const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
 
   const datesValid = isValidRange(query.checkIn, query.checkOut);
   const nights = nightsBetween(query.checkIn, query.checkOut);
@@ -46,6 +48,16 @@ export default function HotelDetailPage() {
     () => getHotel(id, { checkIn: query.checkIn, checkOut: query.checkOut }),
     [id, query.checkIn, query.checkOut],
   );
+
+  const heroSrc = hotel?.mainPhoto || hotel?.thumbnail || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=85';
+  const realPhotos = [...new Set([...(hotel?.images || []), hotel?.mainPhoto, hotel?.thumbnail].filter(Boolean))].slice(0, 8);
+  const galleryPhotos = realPhotos.length > 0 ? realPhotos : GALLERY_IMGS;
+  const guestScore = hotel?.guestRating > 0 ? hotel.guestRating : null;
+  const starClass = hotel?.starRating > 0 ? hotel.starRating : null;
+  const mapUrl = hotel?.latitude != null && hotel?.longitude != null
+    ? `https://www.google.com/maps/search/?api=1&query=${hotel.latitude},${hotel.longitude}`
+    : null;
+  const uniqueAmenities = [...new Map((hotel?.amenities || []).map((a) => [a.toLowerCase(), a])).values()];
 
   async function handleBooking({ guestName, email }) {
     setSubmitting(true);
@@ -96,7 +108,7 @@ export default function HotelDetailPage() {
           <div className="detail-hero">
             <img
               className="detail-hero-img"
-              src={hotel.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=85'}
+              src={heroSrc}
               alt={hotel.name}
             />
             <div className="detail-hero-overlay">
@@ -104,17 +116,33 @@ export default function HotelDetailPage() {
                 {hotel.location}
               </p>
               <h1>{hotel.name}</h1>
+              {(starClass != null || guestScore != null || hotel.address) && (
+                <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '.9rem', marginTop: 'var(--space-2)' }}>
+                  {starClass != null && <span style={{ letterSpacing: '.1em' }}>{'★'.repeat(Math.min(5, Math.round(starClass)))}</span>}
+                  {starClass != null && guestScore != null && ' · '}
+                  {guestScore != null && <span>{Number(guestScore).toFixed(1)}{hotel.reviewCount > 0 && ` (${hotel.reviewCount.toLocaleString()} reviews)`}</span>}
+                  {(starClass != null || guestScore != null) && hotel.address && ' · '}
+                  {hotel.address && <span>{hotel.address}</span>}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Gallery strip */}
-          <div className="detail-gallery-strip">
-            {GALLERY_IMGS.map((src, i) => (
-              <div className="gallery-thumb" key={i}>
-                <img src={src} alt={`${hotel.name} photo ${i + 2}`} loading="lazy" />
-              </div>
-            ))}
-          </div>
+          {galleryPhotos.length > 1 && (
+            <div className="detail-gallery-strip">
+              {galleryPhotos.map((src, i) => (
+                <div
+                  className="gallery-thumb"
+                  key={i}
+                  style={galleryPhotos.length < 4 ? { gridColumn: `span ${4 / galleryPhotos.length}` } : undefined}
+                >
+                  <img src={src} alt={`${hotel.name} photo ${i + 1}`} loading="lazy" />
+                </div>
+              ))}
+            </div>
+          )}
+          <PhotoCarousel photos={galleryPhotos} name={hotel.name} />
 
           <p style={{ marginBottom: '1rem' }}>
             <Link
@@ -140,17 +168,47 @@ export default function HotelDetailPage() {
                 <p style={{ lineHeight: 1.7, color: 'var(--text-2)' }}>{hotel.description}</p>
               </div>
 
+              {(hotel.address || hotel.brand || hotel.propertyType || hotel.phone || hotel.website || mapUrl) && (
+                <div className="detail-section">
+                  <h2>Property details</h2>
+                  <div style={{ display: 'grid', gap: '.4rem', fontSize: '.9rem', color: 'var(--text-2)' }}>
+                    {hotel.address && (
+                      <p>
+                        <strong>Address:</strong> {hotel.address}{hotel.postalCode ? ` ${hotel.postalCode}` : ''}
+                        {mapUrl && <> · <a href={mapUrl} target="_blank" rel="noreferrer">View on map</a></>}
+                      </p>
+                    )}
+                    {(hotel.brand || hotel.propertyType) && (
+                      <p><strong>Property:</strong> {[hotel.brand, hotel.propertyType].filter(Boolean).join(' · ')}</p>
+                    )}
+                    {hotel.phone && <p><strong>Phone:</strong> {hotel.phone}</p>}
+                    {hotel.website && <p><strong>Website:</strong> <a href={hotel.website} target="_blank" rel="noreferrer">{hotel.website}</a></p>}
+                  </div>
+                </div>
+              )}
+
               {hotel.amenities?.length > 0 && (
                 <div className="detail-section">
                   <h2>Amenities</h2>
                   <div className="amenity-grid">
-                    {hotel.amenities.map((amenity) => (
+                    {(amenitiesExpanded ? uniqueAmenities : uniqueAmenities.slice(0, 8)).map((amenity) => (
                       <div key={amenity} className="amenity-item">
                         <span className="amenity-icon">{AMENITY_ICONS[amenity] || '✓'}</span>
                         {amenity}
                       </div>
                     ))}
                   </div>
+                  {uniqueAmenities.length > 8 && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-small"
+                      aria-expanded={amenitiesExpanded}
+                      onClick={() => setAmenitiesExpanded((v) => !v)}
+                      style={{ marginTop: '.75rem' }}
+                    >
+                      {amenitiesExpanded ? 'Show fewer amenities' : `Show all ${uniqueAmenities.length} amenities`}
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -162,6 +220,11 @@ export default function HotelDetailPage() {
                 <p className="muted" style={{ fontSize: '.88rem' }}>
                   Rates and room availability are checked for {query.checkIn} → {query.checkOut} ({nights} night{nights === 1 ? '' : 's'}).
                 </p>
+                {(hotel.roomName || hotel.boardName) && (
+                  <p style={{ fontSize: '.88rem', marginTop: '.5rem' }}>
+                    <strong>Your room:</strong> {[hotel.roomName, hotel.boardName].filter(Boolean).join(' · ')}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -218,6 +281,22 @@ export default function HotelDetailPage() {
               )}
             </aside>
           </div>
+
+          {hotel.available && !soldOut && (
+            <div className="booking-bar">
+              <div className="booking-bar-price">
+                <div className="price">
+                  {formatMoney(hotel.pricePerNight)}<span className="price-sub"> / night</span>
+                </div>
+                <div className="muted small">
+                  {formatMoney(Number(hotel.pricePerNight || 0) * Number(nights || 0))} total · {nights} night{nights === 1 ? '' : 's'}
+                </div>
+              </div>
+              {user
+                ? <a href="#booking-form" className="btn btn-primary">Book now</a>
+                : <Link to="/login" className="btn btn-primary">Sign in to book</Link>}
+            </div>
+          )}
         </>
       )}
     </section>

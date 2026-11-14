@@ -32,12 +32,13 @@ public record HotelDetailDto(
     Integer reviewCount,
     String roomName,
     String rateOfferId,
-    String boardName) {
+    String boardName,
+    List<String> images) {
   public HotelDetailDto(Long id, String name, String location, String description,
       List<String> amenities, BigDecimal pricePerNight, int totalRooms,
       Integer availableRooms, AvailabilityDto availability, SmartAlternativesDto smartAlternatives) {
     this(id, name, location, description, amenities, pricePerNight, totalRooms,
         availableRooms, availability, smartAlternatives, null, null, null, null, null, null, null, null, null,
-        null, null, null, null, null, null, null, null);
+        null, null, null, null, null, null, null, null, null);
   }
 }

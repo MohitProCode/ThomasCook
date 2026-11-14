@@ -49,9 +49,12 @@ export default function HotelCard({ hotel, checkIn, checkOut, guests }) {
   const extraCount = Math.max(0, (hotel.amenities || []).length - visibleAmenities.length);
   const nights = hotel.nights ?? null;
   const total = hotel.totalForStay ?? (nights ? hotel.pricePerNight * nights : null);
-  const imgUrl = hotel.imageUrl || FALLBACK_IMAGES[(hotel.id || 0) % FALLBACK_IMAGES.length];
-  const rating = hotel.rating ?? (3.8 + ((hotel.id || 1) % 12) * 0.1);
-  const reviewCount = hotel.reviewCount ?? (120 + ((hotel.id || 1) * 37) % 880);
+  const imgUrl = hotel.thumbnail || hotel.mainPhoto || FALLBACK_IMAGES[(hotel.id || 0) % FALLBACK_IMAGES.length];
+  const guestScore = hotel.guestRating > 0 ? hotel.guestRating : null;
+  const starClass = hotel.starRating > 0 ? hotel.starRating : null;
+  const reviewCount = hotel.reviewCount > 0 ? hotel.reviewCount : null;
+  const propertyLabel = hotel.brand
+    || (hotel.propertyType ? hotel.propertyType.charAt(0).toUpperCase() + hotel.propertyType.slice(1) : 'Hotel');
 
   return (
     <article className="card hotel-card">
@@ -62,7 +65,7 @@ export default function HotelCard({ hotel, checkIn, checkOut, guests }) {
           role="img"
           aria-label={hotel.name}
         />
-        <span className="image-tag">Guest favourite</span>
+        {guestScore != null && guestScore >= 8 && <span className="image-tag">Guest favourite</span>}
         <button
           className={`heart-button${saved ? ' saved' : ''}`}
           type="button"
@@ -80,7 +83,7 @@ export default function HotelCard({ hotel, checkIn, checkOut, guests }) {
       <div className="hotel-card-body">
         <div className="hotel-card-top">
           <div style={{ minWidth: 0 }}>
-            <p className="hotel-type">Hotel</p>
+            <p className="hotel-type">{propertyLabel}</p>
             <h2 className="hotel-name">
               <Link to={detailLink}>{hotel.name}</Link>
             </h2>
@@ -88,18 +91,26 @@ export default function HotelCard({ hotel, checkIn, checkOut, guests }) {
           <AvailabilityBadge hotel={hotel} />
         </div>
 
-        <div className="hotel-rating">
-          <span className="rating-score">{rating.toFixed(1)}</span>
-          <StarRating rating={rating} />
-          <span className="rating-count">({reviewCount.toLocaleString()})</span>
-        </div>
+        {(guestScore != null || starClass != null) && (
+          <div className="hotel-rating">
+            {guestScore != null && <span className="rating-score">{Number(guestScore).toFixed(1)}</span>}
+            {starClass != null && <StarRating rating={starClass} />}
+            {reviewCount != null && <span className="rating-count">({reviewCount.toLocaleString()})</span>}
+          </div>
+        )}
 
         <p className="hotel-location">
           <MapPin size={12} weight="regular" aria-hidden="true" />
-          {hotel.location}
+          {hotel.address || hotel.location}
         </p>
 
         <p className="hotel-desc">{hotel.description}</p>
+
+        {(hotel.roomName || hotel.boardName) && (
+          <p className="muted small" style={{ margin: 'var(--space-1) 0' }}>
+            {[hotel.roomName, hotel.boardName].filter(Boolean).join(' · ')}
+          </p>
+        )}
 
         {visibleAmenities.length > 0 && (
           <ul className="chips" aria-label="Amenities">

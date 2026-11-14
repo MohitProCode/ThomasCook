@@ -18,7 +18,7 @@ export default function BookingForm({ initialGuests = 2, initialGuestName = '', 
   }
 
   return (
-    <form className="form" onSubmit={handleSubmit} noValidate>
+    <form id="booking-form" className="form" onSubmit={handleSubmit} noValidate>
       {accountUser ? <div className="account-booking-strip"><span className="avatar">{accountUser.displayName.slice(0,1).toUpperCase()}</span><span><strong>Booking as {accountUser.displayName}</strong><small>{accountUser.email}</small></span></div> : <><div className="field">
         <label htmlFor="guestName">Guest name</label>
         <input

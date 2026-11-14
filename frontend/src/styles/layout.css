@@ -343,10 +343,10 @@
   .account-heading { margin: var(--space-5) 0 var(--space-4); }
   .account-content { max-width: none; }
 
-  /* Detail layout — booking card goes above content on mobile */
+  /* Detail layout — content first on mobile; the sticky bar owns the booking CTA */
   .detail-layout {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     gap: var(--space-5);
     margin-top: var(--space-4);
   }
