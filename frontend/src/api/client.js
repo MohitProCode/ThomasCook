@@ -21,7 +21,7 @@ function withQuery(path, query = {}) {
   return suffix ? `${path}?${suffix}` : path;
 }
 
-export async function apiFetch(path, { method = 'GET', body, query, timeoutMs = 12000 } = {}) {
+export async function apiFetch(path, { method = 'GET', body, query, timeoutMs = 60000 } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response;
