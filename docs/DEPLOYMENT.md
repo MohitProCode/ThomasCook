@@ -36,11 +36,15 @@ Option B (VM + Docker):
 4. Open the firewall for `${HOST_PORT:-8082}` (or put Caddy/Nginx + TLS in
    front and expose 443 only).
 
-Option C (Railway):
+Option C (Railway, paid):
 
 1. Create a MySQL service from the template with its volume at
    `/var/lib/mysql`.
-2. Copy the public connection values into the backend env vars below.
+2. Enable public TCP networking on the MySQL service. Copy the public
+   host, public port (a random port, not 3306), user, and password into
+   the backend env vars below. `DB_PORT` is a Blueprint prompt for this
+   reason.
+3. Create the `hotel_booking` database (Railway's built-in Query tab works).
 
 ## 2. Deploy the backend (Render Free + Blueprint)
 
